@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SQL Validator</title>
+</head>
+<body>
+    <h1>SQL Validator</h1>
+    <textarea id="sqlQuery" rows="5" cols="50"></textarea><br><br>
+    <button onclick="validateSQL()">Validate SQL</button><br><br>
+    <div id="columnNames"></div>
+
+    <script>
+        async function validateSQL() {
+            const sqlQuery = document.getElementById('sqlQuery').value;
+
+            const response = await fetch('/validate_sql/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({sql_query: sqlQuery})
+            });
+
+            const data = await response.json();
+            const columnNames = data.column_names;
+
+            const columnNamesDiv = document.getElementById('columnNames');
+            columnNamesDiv.innerHTML = `<h3>Column Names:</h3>`;
+            if (columnNames.length > 0) {
+                const ul = document.createElement('ul');
+                columnNames.forEach(colName => {
+                    const li = document.createElement('li');
+                    li.textContent = colName;
+                    ul.appendChild(li);
+                });
+                columnNamesDiv.appendChild(ul);
+            } else {
+                columnNamesDiv.textContent = 'No column names found';
+            }
+        }
+    </script>
+</body>
+</html>
