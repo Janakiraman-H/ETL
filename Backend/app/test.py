@@ -65,3 +65,53 @@ sleep(600)  # Adjust the sleep time based on your requirements
 # Join threads to wait for their completion
 producer_thread.join()
 consumer_thread.join()
+
+
+
+# Import libraries
+import kfp
+
+# Define pipeline parameters (replace with your parameters)
+name_param = kfp.components.inputs.Argument(type=str, default="example-pipeline")
+
+# Define placeholder functions for pipeline steps (replace with your functions)
+def data_preprocess(data_path):
+  # Preprocess data at 'data_path'
+  print(f"Preprocessing data from {data_path}")
+  # ... (your data preprocessing logic here)
+  return "preprocessed_data"
+
+def train_model(data):
+  # Train model using 'data'
+  print(f"Training model with data")
+  # ... (your model training logic here)
+  return "trained_model"
+
+# Create KFP components from functions
+data_preprocess_op = kfp.components.create_component_from_func(
+    data_preprocess,
+    base_image="python:3.7",
+    output_artifacts=["preprocessed_data"]
+)
+
+train_model_op = kfp.components.create_component_from_func(
+    train_model,
+    base_image="tensorflow:2.4-gpu",
+    input_artifacts=["preprocessed_data"],
+    output_artifacts=["trained_model"]
+)
+
+# Build the pipeline
+@kfp.dsl.pipeline
+def my_pipeline(data_path=name_param):
+  preprocessed_data = data_preprocess_op(data_path)
+  trained_model = train_model_op(preprocessed_data.output)
+
+# Compile the pipeline
+pipeline_definition = kfp.compiler.PipelineCompiler().compile(my_pipeline)
+
+# Run the pipeline (replace with your Kubeflow Pipelines API endpoint)
+client = kfp.Client(endpoint="http://kubeflow-pipeline-api:8888")
+client.create_run_from_pipeline_func(pipeline_definition)
+
+print("Pipeline submitted successfully!")
